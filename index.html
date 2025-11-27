@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tiempo de Reaccion</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;overflow-x:hidden}
+body{font-family:Georgia,serif;background:linear-gradient(135deg,#0a0e27,#1a1034,#2d1b4e);min-height:100vh;color:#e8e8f0;display:flex;flex-direction:column;align-items:center;padding:8px;-webkit-tap-highlight-color:transparent}
+.title{font-size:1.4em;background:linear-gradient(135deg,#ffd700,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center}
+.subtitle{color:#d4af37;margin-bottom:6px;font-size:0.8em}
+.box{background:rgba(255,255,255,0.05);border:2px solid rgba(212,175,55,0.5);border-radius:12px;padding:10px;width:calc(100% - 16px);max-width:340px}
+.hidden{display:none!important}
+.banner{background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.5);color:#ffd700;padding:4px 8px;border-radius:8px;font-size:0.7em}
+.back{padding:4px 8px;background:rgba(255,255,255,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;color:#ffd700;text-decoration:none;font-size:0.7em}
+.top-bar{width:calc(100% - 16px);max-width:340px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.popup-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:5000;padding:12px}
+.popup{background:linear-gradient(135deg,#1a1034,#2d1b4e);border:2px solid rgba(255,215,0,0.3);border-radius:12px;padding:16px;width:90%;max-width:260px;text-align:center}
+.popup h3{color:#e8e8f0;margin-bottom:4px;font-size:0.95em}
+.popup p{color:#a0a0b8;font-size:0.75em;margin-bottom:12px}
+.popup a{display:block;padding:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#e8e8f0;text-decoration:none;margin-bottom:10px;font-size:0.8em}
+.popup button{width:100%;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a1034;border:none;padding:8px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:0.85em}
+.pin-title{color:#ffd700;font-size:1em;text-align:center;margin-bottom:4px}
+.pin-sub{color:#b8b8cc;text-align:center;margin-bottom:12px;font-size:0.75em}
+.dots{display:flex;justify-content:center;gap:8px;margin-bottom:12px}
+.dot{width:12px;height:12px;border-radius:50%;border:2px solid rgba(212,175,55,0.5)}
+.dot.on{background:#ffd700;border-color:#ffd700}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:180px;margin:0 auto 10px}
+.key{aspect-ratio:1;font-size:1.1em;border:2px solid rgba(212,175,55,0.3);background:rgba(255,255,255,0.05);color:#e8e8f0;border-radius:6px;cursor:pointer}
+.key:active{transform:scale(0.95)}
+.key.empty{visibility:hidden}
+.msg{text-align:center;min-height:16px;font-size:0.75em}
+.msg.err{color:#ff6b6b}
+.msg.ok{color:#4ecdc4}
+.toggle{text-align:center;margin-top:10px;color:#b8b8cc;font-size:0.75em}
+.toggle span{color:#ffd700;cursor:pointer;text-decoration:underline}
+.btn{width:100%;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a1034;border:none;padding:10px;border-radius:15px;font-size:0.85em;font-weight:bold;cursor:pointer;margin-top:5px}
+.btn:active{transform:scale(0.98)}
+.btn2{background:linear-gradient(135deg,#8a2be2,#4b0082);color:#fff}
+.welcome{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:8px;padding:10px;margin-bottom:10px;text-align:center}
+.welcome h3{color:#ffd700;margin-bottom:2px;font-size:0.95em}
+.welcome p{font-size:0.75em;color:#b8b8cc}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:10px 0}
+.stat{background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;text-align:center;border:1px solid rgba(212,175,55,0.2)}
+.stat b{display:block;font-size:1.2em;color:#ffd700}
+.stat span{color:#b8b8cc;font-size:0.65em}
+.react-zone{width:100%;height:280px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s;margin:10px 0}
+.react-zone.waiting{background:linear-gradient(135deg,#e74c3c,#c0392b)}
+.react-zone.ready{background:linear-gradient(135deg,#2ecc71,#27ae60)}
+.react-zone.result{background:linear-gradient(135deg,#3498db,#2980b9)}
+.react-zone.early{background:linear-gradient(135deg,#e67e22,#d35400)}
+.react-icon{font-size:3em;margin-bottom:10px}
+.react-text{font-size:1.2em;font-weight:bold;color:#fff}
+.react-sub{font-size:0.8em;color:rgba(255,255,255,0.8);margin-top:5px}
+.react-time{font-size:3em;font-weight:bold;color:#fff}
+.round-info{text-align:center;color:#b8b8cc;font-size:0.8em;margin-bottom:5px}
+.attempts{display:flex;justify-content:center;gap:8px;margin:10px 0}
+.attempt{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.7em;background:rgba(255,255,255,0.1);border:1px solid rgba(212,175,55,0.3)}
+.attempt.done{background:rgba(46,204,113,0.3);border-color:#2ecc71;color:#2ecc71}
+.attempt.early{background:rgba(231,76,60,0.3);border-color:#e74c3c;color:#e74c3c}
+.res-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;justify-content:center;align-items:center;z-index:3000;padding:12px}
+.res{background:linear-gradient(135deg,#1a1034,#2d1b4e);border:2px solid #ffd700;border-radius:12px;padding:16px 12px;width:90%;max-width:300px;text-align:center}
+.res h2{color:#ffd700;margin-bottom:6px;font-size:1.1em}
+.res-score{font-size:2.2em;color:#ffd700;font-weight:bold}
+.res-label{color:#b8b8cc;margin-bottom:10px;font-size:0.8em}
+.record{background:rgba(255,215,0,0.2);border:1px solid #ffd700;border-radius:5px;padding:6px;margin:8px 0;color:#ffd700;font-weight:bold;font-size:0.85em}
+.rating{color:#d4af37;margin-bottom:10px;font-size:0.85em}
+</style>
+</head>
+<body>
+<div class="top-bar"><a href="https://hooporiapr-oss.github.io/akashic-works/" class="back">Inicio</a><div class="banner" id="bannerEl">3 gratis</div></div>
+<div class="title">Tiempo de Reaccion</div>
+<div class="subtitle">Puerto Rico</div>
+<div class="box" id="loginBox">
+<div class="pin-title">Ingresa tu PIN</div>
+<div class="pin-sub">Escribe tu PIN de 4 digitos</div>
+<div class="dots"><div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div></div>
+<div class="keypad" id="loginPad"></div>
+<div class="msg" id="loginMsg"></div>
+<div class="toggle">No tienes cuenta? <span id="toCreate">Crear PIN</span></div>
+</div>
+<div class="box hidden" id="createBox">
+<div class="pin-title" id="createTitle">Crear PIN</div>
+<div class="pin-sub" id="createSub">Escoge un PIN de 4 digitos</div>
+<div class="dots"><div class="dot" id="c1"></div><div class="dot" id="c2"></div><div class="dot" id="c3"></div><div class="dot" id="c4"></div></div>
+<div class="keypad" id="createPad"></div>
+<div class="msg" id="createMsg"></div>
+<div class="toggle">Ya tienes PIN? <span id="toLogin">Entrar</span></div>
+</div>
+<div class="box hidden" id="dashBox">
+<div class="welcome"><h3>Bienvenido!</h3><p>Prueba tu velocidad de reaccion</p></div>
+<div class="stats"><div class="stat"><b id="dGames">0</b><span>Juegos</span></div><div class="stat"><b id="dBest">--</b><span>Mejor (ms)</span></div><div class="stat"><b id="dAvg">--</b><span>Promedio</span></div><div class="stat"><b id="dRate">--</b><span>Nivel</span></div></div>
+<button class="btn" id="startBtn">Comenzar</button>
+<button class="btn btn2" id="logoutBtn">Salir</button>
+</div>
+<div class="box hidden" id="gameBox">
+<div class="round-info">Ronda <span id="gRound">1</span> de 5</div>
+<div class="attempts" id="attemptsEl"></div>
+<div class="react-zone waiting" id="reactZone">
+<div class="react-icon" id="reactIcon">⏳</div>
+<div class="react-text" id="reactText">Espera el verde...</div>
+<div class="react-sub" id="reactSub">Luego toca lo mas rapido posible!</div>
+</div>
+<button class="btn btn2" id="quitBtn">Salir</button>
+</div>
+<div class="res-bg hidden" id="resBg">
+<div class="res">
+<h2>Resultados!</h2>
+<div class="res-score" id="resAvg">0 ms</div>
+<div class="res-label">Tiempo de Reaccion Promedio</div>
+<div class="record hidden" id="resRecord">Nuevo Record!</div>
+<div class="rating" id="resRating">Nivel: --</div>
+<button class="btn" id="againBtn">Jugar Otra Vez</button>
+<button class="btn btn2" id="menuBtn">Menu</button>
+</div>
+</div>
+<div class="popup-bg hidden" id="limitPopup">
+<div class="popup">
+<h3 id="limitTitle">Limite diario alcanzado</h3>
+<p id="limitMsg">Usaste tus 3 juegos gratis hoy</p>
+<a href="https://hooporiapr-oss.github.io/akashic-works/">Volver al Inicio</a>
+<button id="upgradeBtn">Desbloquear Ilimitado</button>
+</div>
+</div>
+<script>
+(function(){
+var PK="rtpr1_pin",SK="rtpr1_stats_",DK="rtpr1_device",MAX_DAILY=3,MAX_DAYS=3,ROUNDS=5;
+var currentPin="",round=0,times=[],state="idle",startTime=0,timeout=null;
+function $(id){return document.getElementById(id);}
+function getDeviceId(){var id=localStorage.getItem(DK);if(!id){id='dev_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);localStorage.setItem(DK,id);}return id;}
+function getToday(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function getDeviceTries(){var key=DK+"_tries";try{var t=JSON.parse(localStorage.getItem(key));if(t&&t.startDate)return t;}catch(e){}return{n:0,d:getToday(),startDate:getToday(),daysUsed:[]};}
+function setDeviceTries(t){localStorage.setItem(DK+"_tries",JSON.stringify(t));}
+function getDaysDiff(startDate){var start=new Date(startDate);var now=new Date();return Math.floor((now-start)/(1000*60*60*24));}
+function canPlay(){var t=getDeviceTries(),today=getToday();var daysSinceStart=getDaysDiff(t.startDate);if(daysSinceStart>=MAX_DAYS)return{ok:false,left:0,expired:true,daysLeft:0};if(t.d!==today){t.n=0;t.d=today;if(t.daysUsed.indexOf(today)===-1)t.daysUsed.push(today);setDeviceTries(t);}return{ok:t.n<MAX_DAILY,left:MAX_DAILY-t.n,expired:false,daysLeft:MAX_DAYS-daysSinceStart};}
+function useTry(){var t=getDeviceTries(),today=getToday();if(t.d!==today){t.n=0;t.d=today;if(t.daysUsed.indexOf(today)===-1)t.daysUsed.push(today);}t.n++;setDeviceTries(t);showBanner();}
+function hash(p){var h=0,s=p+"rtpr1";for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h&=h;}return h.toString(36);}
+function getPins(){try{return JSON.parse(localStorage.getItem(PK))||{};}catch(e){return{};}}
+function savePins(p){localStorage.setItem(PK,JSON.stringify(p));}
+function checkPin(p){return!!getPins()[hash(p)];}
+function savePin(p){var pins=getPins();pins[hash(p)]={created:Date.now()};savePins(pins);}
+function getStats(){try{return JSON.parse(localStorage.getItem(SK+hash(currentPin)))||{games:0,bestAvg:0,totalAvg:0};}catch(e){return{games:0,bestAvg:0,totalAvg:0};}}
+function setStats(s){localStorage.setItem(SK+hash(currentPin),JSON.stringify(s));}
+function showBanner(){var c=canPlay();$("bannerEl").textContent=c.expired?"Prueba terminada":c.left+"/"+MAX_DAILY+" (Dia "+c.daysLeft+")";}
+function showLimit(){var c=canPlay();$("limitTitle").textContent=c.expired?"Prueba gratis terminada":"Limite diario alcanzado";$("limitMsg").textContent=c.expired?"Tu prueba gratis de 3 dias ha expirado":"Usaste "+MAX_DAILY+" juegos gratis hoy. "+c.daysLeft+" dia(s) restantes.";$("limitPopup").classList.remove("hidden");}
+function show(id){["loginBox","createBox","dashBox","gameBox"].forEach(function(x){$(x).classList.add("hidden");});$(id).classList.remove("hidden");}
+function setDots(pre,n){for(var i=1;i<=4;i++){var el=$(pre+i);if(el){if(i<=n)el.classList.add("on");else el.classList.remove("on");}}}
+function setMsg(id,t,isErr){var m=$(id);m.textContent=t;m.className="msg "+(isErr?"err":"ok");}
+function getRating(ms){if(!ms||ms<1)return"--";if(ms<=200)return"Genio";if(ms<=250)return"Experto";if(ms<=300)return"Excelente";if(ms<=400)return"Bueno";return"Aprendiz";}
+var loginPin="",createPin="",confirmPin="",isConfirming=false;
+function buildKeypad(cid,onDigit,onDel){var c=$(cid);c.innerHTML="";for(var i=1;i<=9;i++){(function(d){var b=document.createElement("button");b.className="key";b.textContent=d;b.onclick=function(){onDigit(d);};c.appendChild(b);})(i);}var e=document.createElement("button");e.className="key empty";c.appendChild(e);var z=document.createElement("button");z.className="key";z.textContent="0";z.onclick=function(){onDigit(0);};c.appendChild(z);var del=document.createElement("button");del.className="key";del.textContent="<";del.onclick=onDel;c.appendChild(del);}
+function setupLogin(){buildKeypad("loginPad",function(d){if(loginPin.length<4){loginPin+=d;setDots("d",loginPin.length);if(loginPin.length===4){setTimeout(function(){if(checkPin(loginPin)){currentPin=loginPin;loadDash();}else{setMsg("loginMsg","PIN incorrecto",true);loginPin="";setDots("d",0);}},200);}}},function(){if(loginPin.length>0){loginPin=loginPin.slice(0,-1);setDots("d",loginPin.length);$("loginMsg").textContent="";}});}
+function setupCreate(){buildKeypad("createPad",function(d){if(confirmPin.length<4){confirmPin+=d;setDots("c",confirmPin.length);if(confirmPin.length===4){setTimeout(function(){if(!isConfirming){createPin=confirmPin;confirmPin="";isConfirming=true;$("createTitle").textContent="Confirmar PIN";$("createSub").textContent="Escribe el PIN otra vez";setDots("c",0);}else{if(confirmPin===createPin){savePin(createPin);currentPin=createPin;setMsg("createMsg","PIN creado!",false);setTimeout(loadDash,500);}else{setMsg("createMsg","PINs no coinciden",true);createPin="";confirmPin="";isConfirming=false;$("createTitle").textContent="Crear PIN";$("createSub").textContent="Escoge un PIN de 4 digitos";setDots("c",0);}}},200);}}},function(){if(confirmPin.length>0){confirmPin=confirmPin.slice(0,-1);setDots("c",confirmPin.length);$("createMsg").textContent="";}});}
+function loadDash(){var s=getStats();$("dGames").textContent=s.games||0;$("dBest").textContent=s.bestAvg||"--";$("dAvg").textContent=s.games>0?Math.round(s.totalAvg/s.games):"--";$("dRate").textContent=getRating(s.bestAvg);show("dashBox");showBanner();if(!canPlay().ok)showLimit();}
+function updateAttempts(){var el=$("attemptsEl");el.innerHTML="";for(var i=0;i<ROUNDS;i++){var div=document.createElement("div");div.className="attempt";if(i<times.length){div.classList.add(times[i]==="early"?"early":"done");div.textContent=times[i]==="early"?"X":times[i];}el.appendChild(div);}}
+function setZone(cls,icon,text,sub){var z=$("reactZone");z.className="react-zone "+cls;$("reactIcon").textContent=icon;$("reactText").textContent=text;$("reactSub").textContent=sub||"";}
+function startRound(){state="waiting";setZone("waiting","⏳","Espera el verde...","Luego toca lo mas rapido posible!");var delay=1500+Math.random()*3000;timeout=setTimeout(function(){state="ready";startTime=Date.now();setZone("ready","⚡","TOCA AHORA!","");},delay);}
+function handleTap(){if(state==="waiting"){clearTimeout(timeout);state="early";times.push("early");setZone("early","❌","Muy temprano!","Toca para continuar");updateAttempts();}else if(state==="ready"){var reaction=Date.now()-startTime;times.push(reaction);state="result";setZone("result","✓",reaction+" ms","Toca para continuar");updateAttempts();}else if(state==="early"||state==="result"){round++;if(round>=ROUNDS){endGame();}else{$("gRound").textContent=round+1;startRound();}}}
+function startGame(){if(!canPlay().ok){showLimit();return;}round=0;times=[];$("gRound").textContent="1";updateAttempts();show("gameBox");startRound();}
+function endGame(){var valid=times.filter(function(t){return t!=="early";});var avg=valid.length>0?Math.round(valid.reduce(function(a,b){return a+b;},0)/valid.length):0;var s=getStats();s.games++;s.totalAvg+=avg;var isRec=avg>0&&(!s.bestAvg||avg<s.bestAvg);if(isRec)s.bestAvg=avg;setStats(s);useTry();$("resAvg").textContent=avg+" ms";$("resRating").textContent="Nivel: "+getRating(avg);if(isRec&&avg>0){$("resRecord").classList.remove("hidden");}else{$("resRecord").classList.add("hidden");}$("resBg").classList.remove("hidden");if(!canPlay().ok)setTimeout(showLimit,1500);}
+document.addEventListener("DOMContentLoaded",function(){getDeviceId();setupLogin();setupCreate();$("toCreate").onclick=function(){createPin="";confirmPin="";isConfirming=false;$("createTitle").textContent="Crear PIN";$("createSub").textContent="Escoge un PIN de 4 digitos";setDots("c",0);$("createMsg").textContent="";show("createBox");};$("toLogin").onclick=function(){loginPin="";setDots("d",0);$("loginMsg").textContent="";show("loginBox");};$("startBtn").onclick=function(){if(!canPlay().ok){showLimit();return;}startGame();};$("logoutBtn").onclick=function(){loginPin="";currentPin="";setDots("d",0);show("loginBox");};$("quitBtn").onclick=function(){if(timeout)clearTimeout(timeout);loadDash();};$("reactZone").onclick=handleTap;$("againBtn").onclick=function(){$("resBg").classList.add("hidden");if(!canPlay().ok){showLimit();return;}startGame();};$("menuBtn").onclick=function(){$("resBg").classList.add("hidden");loadDash();};$("upgradeBtn").onclick=function(){location.href="mailto:support@akashic.works?subject=Pro%20Upgrade";};show("loginBox");showBanner();});
+})();
+</script>
+</body>
+</html>
